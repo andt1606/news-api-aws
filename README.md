@@ -6,7 +6,7 @@ Cloud Computing Project using Springboot and Angular with AWS Elastic Beanstalk
 ### Installation:
 - Clone this project https://github.com/andt1606/news-api-aws.git (Backend)
 - Open the project with IDE (Eclipse, IntelliJ,...)
-- Open terminal:
+- Open terminal in IDE:
   - mvn clean install
 - Open folder contains this project
   - access target folder
