@@ -8,5 +8,7 @@ Cloud Computing Project using Springboot and Angular with AWS Elastic Beanstalk
 - Open the project with IDE (Eclipse, IntelliJ,...)
 - Open terminal:
   - <b>mvn clean install<b>
-- Open folder contains this project, access <b>target<b> folder, there will have a file's name <b>spring-boot-1.0.jar</b>
+- Open folder contains this project
+  - access <b>target<b> folder
+  - <b>spring-boot-1.0.jar<b> this .jar file is used to deploy to AWS Elastic Beanstalk
 
