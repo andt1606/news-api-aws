@@ -12,3 +12,4 @@ Cloud Computing Project using Springboot and Angular with AWS Elastic Beanstalk
   - access target folder
   - spring-boot-1.0.jar this .jar file is used to deploy to AWS Elastic Beanstalk
 
+### Hosting AWS
