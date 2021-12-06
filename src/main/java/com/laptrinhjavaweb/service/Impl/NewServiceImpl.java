@@ -10,9 +10,16 @@ import com.laptrinhjavaweb.service.INewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 @Service
 public class NewServiceImpl implements INewService {
@@ -66,14 +73,106 @@ public class NewServiceImpl implements INewService {
         return (int)newRepository.count();
     }
 
-//    @Override
-//    public NewDTO update(NewDTO newDTO) {
-//        //update thì lấy lại dữ liệu cũ
-//        NewEntity oldNewEntity = newRepository.findOne(newDTO.getId());
-//        NewEntity newEntity = newConverter.toEntity(newDTO,oldNewEntity);
-//        CategoryEntity categoryEntity = categoryRepository.findOneByCode(newDTO.getCategoryCode());
-//        newEntity.setCategory(categoryEntity);
-//        newEntity = newRepository.save(newEntity);
-//        return newConverter.toDTO(newEntity);
-//    }
+    @Override
+    public List<NewDTO> getAllNews() {
+        List<NewDTO> results = new ArrayList<>();
+        List<NewEntity> entities = newRepository.findAll();
+        for (NewEntity item: entities){
+            NewDTO newDTO = newConverter.toDTO(item);
+            results.add(newDTO);
+        }
+        return results;
+    }
+
+    @Override
+    public NewDTO getOneNew(Long id) {
+        NewEntity entity = newRepository.findOne(id);
+        NewDTO newDTO = newConverter.toDTO(entity);
+        return newDTO;
+    }
+
+    @Override
+    public void delete(Long id) {
+        newRepository.delete(id);
+    }
+
+    @Override
+    public NewDTO creNew(Map<String, Object> params, MultipartFile file) throws IOException {
+        NewEntity newEntity = new NewEntity();
+        NewDTO newDTO = new NewDTO();
+        newDTO.setTitle(params.get("title").toString());
+        newDTO.setShortDescription(params.get("shortDescription").toString());
+        newDTO.setContent(params.get("content").toString());
+        newDTO.setCategoryCode(params.get("categoryCode").toString());
+        newDTO.setThumbnail(compressBytes(file.getBytes()));
+        newEntity = newConverter.toEntity(newDTO);
+        CategoryEntity categoryEntity = categoryRepository.findOneByCode(newDTO.getCategoryCode());
+        newEntity.setCategory(categoryEntity);
+
+        newEntity = newRepository.save(newEntity);
+
+        return newConverter.toDTO(newEntity);
+    }
+
+    @Override
+    public NewDTO updateNew(Long id, Map<String, Object> params, MultipartFile file) throws IOException {
+        NewEntity newEntity = new NewEntity();
+        NewDTO newDTO = new NewDTO();
+        newDTO.setTitle(params.get("title").toString());
+        newDTO.setShortDescription(params.get("shortDescription").toString());
+        newDTO.setContent(params.get("content").toString());
+        newDTO.setCategoryCode(params.get("categoryCode").toString());
+        newDTO.setThumbnail(compressBytes(file.getBytes()));
+
+        NewEntity oldNewEntity = newRepository.findOne(id);
+        //gán cái mới nhận được cho cái cũ để cập nhật
+        newEntity = newConverter.toEntity(newDTO,oldNewEntity);
+        CategoryEntity categoryEntity = categoryRepository.findOneByCode(newDTO.getCategoryCode());
+        newEntity.setCategory(categoryEntity);
+        newEntity = newRepository.save(newEntity);
+
+
+        return newConverter.toDTO(newEntity);
+    }
+
+    // compress the image bytes before storing it in the database
+    public static byte[] compressBytes(byte[] data) {
+        Deflater deflater = new Deflater();
+        deflater.setInput(data);
+        deflater.finish();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] buffer = new byte[1024];
+        while (!deflater.finished()) {
+            int count = deflater.deflate(buffer);
+            outputStream.write(buffer, 0, count);
+        }
+        try {
+            outputStream.close();
+        } catch (IOException e) {
+        }
+        System.out.println("Compressed Image Byte Size - " + outputStream.toByteArray().length);
+
+        return outputStream.toByteArray();
+    }
+
+    // uncompress the image bytes before returning it to the angular application
+    public static byte[] decompressBytes(byte[] data) {
+        Inflater inflater = new Inflater();
+        inflater.setInput(data);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] buffer = new byte[1024];
+        try {
+            while (!inflater.finished()) {
+                int count = inflater.inflate(buffer);
+                outputStream.write(buffer, 0, count);
+            }
+            outputStream.close();
+        } catch (IOException ioe) {
+        } catch (DataFormatException e) {
+        }
+        return outputStream.toByteArray();
+    }
+
+
 }
